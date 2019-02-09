@@ -54,7 +54,7 @@
 #endif
 
 // This defines the number of extruders
-#define EXTRUDERS 1
+#define EXTRUDERS 2
 
 //// The following define selects which power supply you have. Please choose the one that matches your setup
 // 1 = ATX
@@ -102,8 +102,8 @@
 // The minimal temperature defines the temperature below which the heater will not be enabled It is used
 // to check that the wiring to the thermistor is not broken.
 // Otherwise this would lead to the heater being powered on all the time.
-#define HEATER_0_MINTEMP 5
-#define HEATER_1_MINTEMP 5
+#define HEATER_0_MINTEMP 5 // Orignially_PAUL 5 - temporary change to 0 was tried without success in preventing 'echo: cold extrusion prevented'
+#define HEATER_1_MINTEMP 5 // Originally_PAUL 5 ^^
 #define HEATER_2_MINTEMP 5
 #define BED_MINTEMP 5
 
@@ -191,7 +191,7 @@
 
 //this prevents dangerous Extruder moves, i.e. if the temperature is under the limit
 //can be software-disabled for whatever purposes by
-#define PREVENT_DANGEROUS_EXTRUDE
+// #define PREVENT_DANGEROUS_EXTRUDE // Originally_PAUL not commented out
 //if PREVENT_DANGEROUS_EXTRUDE is on, you can still disable (uncomment) very long bits of extrusion separately.
 #define PREVENT_LENGTHY_EXTRUDE
 
@@ -261,11 +261,11 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define min_software_endstops true //If true, axis won't move to coordinates less than HOME_POS.
 #define max_software_endstops true  //If true, axis won't move to coordinates greater than the defined lengths below.
 // Travel limits after homing
-#define X_MAX_POS 220
+#define X_MAX_POS 220 // This is fine!
 #define X_MIN_POS 0
-#define Y_MAX_POS 270
+#define Y_MAX_POS 200 // Originally_PAUL 270
 #define Y_MIN_POS 0
-#define Z_MAX_POS 195
+#define Z_MAX_POS 100 // Originally_PAUL 195
 #define Z_MIN_POS 0
 
 #define X_MAX_LENGTH (X_MAX_POS - X_MIN_POS)

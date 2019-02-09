@@ -33,7 +33,7 @@
 
 #define E0_STEP_PIN         65
 #define E0_DIR_PIN          66
-#define E0_ENABLE_PIN      -1
+#define E0_ENABLE_PIN      -1 
 
 #define SDPOWER            -1
 #define SDSS               53
@@ -367,9 +367,9 @@
 
 #define HEATER_0_PIN       10   // EXTRUDER 1
 #if MOTHERBOARD == 33
-#define HEATER_1_PIN       -1
+#define HEATER_1_PIN       10   // Originally_PAUL -1
 #else
-#define HEATER_1_PIN       9    // EXTRUDER 2 (FAN On Sprinter)
+#define HEATER_1_PIN       10   // Originally_PAUL 9    // EXTRUDER 2 (FAN On Sprinter)
 #endif
 #define HEATER_2_PIN       -1
 #define TEMP_0_PIN         13   // ANALOG NUMBERING
