@@ -1,18 +1,43 @@
 import pygame, sys
 from pygame.locals import *
+from Printrun.printrun.printcore import printcore
+from Printrun.printrun import gcoder
+import xmlrpc.client
 
+# rpc = xmlrpc.client.ServerProxy('http://localhost:7978')
+p = printcore('COM3', 115200)
+gcode = []
 pygame.init()
 pygame.font.init()
 background = (30, 30, 30)
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 32)
-
-#Create a displace surface object
 DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-
 mainLoop = True
 printing = 0
+
+def is_printing():
+    return p.printing or p.paused
+
+def connect_printer():
+    nonlocal p
+    p = printcore('COM3', 115200)
+
+def begin_print(fname):
+    nonlocal gcode
+    gcode = [i.strip() for i in open(fname)]
+    gcode = gcoder.LightGCode(gcode)
+    p.startprint(gcode)
+
+def pause_print():
+    p.pause()
+
+def resume_print():
+    p.resume()
+
+def disconnect_printer():
+    p.disconnect()
 
 class ImageButton():
     def __init__(self, x, y, image, imageselected, scale = 1):
