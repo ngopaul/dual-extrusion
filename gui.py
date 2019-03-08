@@ -1,7 +1,8 @@
+import os
 import pygame, sys
 from pygame.locals import *
-from Printrun.printrun.printcore import printcore
-from Printrun.printrun import gcoder
+from printrun.printcore import printcore
+from printrun import gcoder
 import xmlrpc.client
 
 # rpc = xmlrpc.client.ServerProxy('http://localhost:7978')
@@ -14,33 +15,50 @@ COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 32)
 DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+w, h = pygame.display.get_surface().get_size()
+print("Width of screen:", w, "::", "Height of screen:", h)
 mainLoop = True
-printing = 0
+current_state = [0]
 
 def is_printing():
     return p.printing or p.paused
 
+def get_state():
+    if not is_printing:
+        return 0
+    elif p.printing:
+        return 1
+    elif p.paused:
+        return 2
+
 def connect_printer():
-    nonlocal p
+    global p
     p = printcore('COM3', 115200)
 
 def begin_print(fname):
-    nonlocal gcode
-    gcode = [i.strip() for i in open(fname)]
-    gcode = gcoder.LightGCode(gcode)
-    p.startprint(gcode)
+    global gcode, current_state
+    current_state[0] = 1
+    print("changing curr state")
+    # gcode = [i.strip() for i in open(fname)]
+    # gcode = gcoder.LightGCode(gcode)
+    # p.startprint(gcode)
+    print("PRINTING", fname)
 
 def pause_print():
     p.pause()
+    current_state[0] = 2
 
 def resume_print():
     p.resume()
+    current_state[0] = 1
 
 def disconnect_printer():
     p.disconnect()
+    connect_printer()
+    current_state[0] = 0
 
 class ImageButton():
-    def __init__(self, x, y, image, imageselected, scale = 1):
+    def __init__(self, x, y, image, imageselected, scale = 1, onclick = (lambda x: 0), visibleon = [0]):
         self.x = x
         self.y = y
         self.scale = scale
@@ -48,10 +66,10 @@ class ImageButton():
         self.imageselected = imageselected
         self.img = image
         self.imgrect = self.img.get_rect()
-        self.visible = True
-
+        self.visible = False
+        self.visibleon = visibleon
+        self.onclick = onclick
         self.update_image(image)
-        
     
     def update_image(self, img):
         self.img = img
@@ -63,53 +81,80 @@ class ImageButton():
         self.imgrect.height = self.imgrect.height
 
     def handle_event(self, event):
-        if event.__dict__['printing']:
-            self.visible = False
-        elif event.__dict__['selection']:
-            self.visible = True
+    #     if event.__dict__['printing']:
+    #         self.visible = False
+    #     elif event.__dict__['selection']:
+    #         self.visible = True
+        if self.visible and event.type == pygame.MOUSEBUTTONUP and self.imgrect.collidepoint(pygame.mouse.get_pos()):
+            self.onclick()
 
     def update(self):
-        if self.imgrect.collidepoint(pygame.mouse.get_pos()):
-            self.update_image(self.imageselected)
-        else:
-            self.update_image(self.image)
+        if not (self.visible == (current_state[0] in self.visibleon)):
+            self.visible = not self.visible
+            DISPLAYSURF.fill(pygame.Color("black"))
+        if self.visible:
+            if self.imgrect.collidepoint(pygame.mouse.get_pos()):
+                self.update_image(self.imageselected)
+            else:
+                self.update_image(self.image)
     
     def draw(self, screen):
         if self.visible:
             screen.blit(self.img, self.imgrect)
 
 class TextOut:
-    def __init__(self, x, y, text, color = COLOR_ACTIVE):
+    def __init__(self, x, y, text, color = COLOR_ACTIVE, visibleon = [0]):
         self.x = x
         self.y = y
         self.color = color
         self.text = text
         self.txt_surface = FONT.render(text, True, self.color)
         self.txt_surface_clear = FONT.render(text, True, background)
+        self.visible = False
+        self.visibleon = visibleon
     
     def handle_event(self, event):
         pass
     
     def update(self):
-        pass
+        if not (self.visible == (current_state[0] in self.visibleon)):
+            self.visible = not self.visible
+            DISPLAYSURF.fill(pygame.Color("black"))
     
     def clear(self):
         DISPLAYSURF.blit(self.txt_surface_clear, (self.x, self.y))
 
     def draw(self, screen):
-        screen.blit(self.txt_surface, (self.x, self.y))
-    
-shape1 = ImageButton(50, 50, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png")) 
-shape2 = ImageButton(350, 50, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png")) 
-shape3 = ImageButton(650, 50, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png")) 
-shapes = [shape1, shape2, shape3]
+        if self.visible:
+            screen.blit(self.txt_surface, (self.x, self.y))
+
+text_select = TextOut(w/2, h/5, "Select a print:", visibleon=[0])
+text_printing = TextOut(w/2, h/5, "Printing:", visibleon=[1])
+text_paused = TextOut(w/2, h/5, "Paused.", visibleon=[2])
+shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/triangle.gcode'), [0]) 
+shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circle.gcode'), [0]) 
+shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/square.gcode'), [0]) 
+shape_play = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "play.png"), pygame.image.load("images/" + "playselected.png"), 1, lambda: resume_print(), [2]) 
+shape_pause = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "pause.png"), pygame.image.load("images/" + "pauseselected.png"), 1, lambda: pause_print(), [1]) 
+shape_stop = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "stop.png"), pygame.image.load("images/" + "stopselected.png"), 1, lambda: disconnect_printer(), [1, 2]) 
+items = [text_select, text_printing, text_paused, shape_triangle, shape_circle, shape_square, shape_play, shape_pause, shape_stop]
 while mainLoop:
-    for shape in shapes:
-        shape.update()
-        shape.draw(DISPLAYSURF)
+    # if get_state():
+    #     current_state[0] = get_state()
+    # else:
+    #     current_state[0] = 0
+    for item in items:
+        item.update()
+        item.draw(DISPLAYSURF)
     for event in pygame.event.get():
+        # print(current_state)
         if event.type == pygame.QUIT:
             mainLoop = False
+        for item in items:
+            item.handle_event(event)
+            item.update()
+            item.draw(DISPLAYSURF)
+        
     pygame.display.update()
 
 pygame.quit()
