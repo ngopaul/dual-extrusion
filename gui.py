@@ -4,6 +4,7 @@ from pygame.locals import *
 from printrun.printcore import printcore
 from printrun import gcoder
 import xmlrpc.client
+import time
 
 # rpc = xmlrpc.client.ServerProxy('http://localhost:7978')
 p = printcore('COM3', 115200)
@@ -20,6 +21,12 @@ print("Width of screen:", w, "::", "Height of screen:", h)
 mainLoop = True
 current_state = [0]
 
+def display_loading():
+    text_wait.visible = True
+    text_wait.draw(DISPLAYSURF)
+    time.sleep(2)
+    text_wait.clear()
+    
 def is_printing():
     return p.printing or p.paused
 
@@ -38,15 +45,16 @@ def connect_printer():
 def begin_print(fname):
     global gcode, current_state
     current_state[0] = 1
-    print("changing curr state")
-    # gcode = [i.strip() for i in open(fname)]
-    # gcode = gcoder.LightGCode(gcode)
-    # p.startprint(gcode)
+    gcode = [i.strip() for i in open(fname)]
+    gcode = gcoder.LightGCode(gcode)
+    p.startprint(gcode)
     print("PRINTING", fname)
 
 def pause_print():
     p.pause()
     current_state[0] = 2
+    while p.printing:
+        display_loading()
 
 def resume_print():
     p.resume()
@@ -103,7 +111,7 @@ class ImageButton():
             screen.blit(self.img, self.imgrect)
 
 class TextOut:
-    def __init__(self, x, y, text, color = COLOR_ACTIVE, visibleon = [0]):
+    def __init__(self, x, y, text, color = COLOR_ACTIVE, visibleon = []):
         self.x = x
         self.y = y
         self.color = color
@@ -131,6 +139,7 @@ class TextOut:
 text_select = TextOut(w/2, h/5, "Select a print:", visibleon=[0])
 text_printing = TextOut(w/2, h/5, "Printing:", visibleon=[1])
 text_paused = TextOut(w/2, h/5, "Paused.", visibleon=[2])
+text_wait = TextOut(w/2, h/4, "PLEASE WAIT...")
 shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/triangle.gcode'), [0]) 
 shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circle.gcode'), [0]) 
 shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/square.gcode'), [0]) 
@@ -147,6 +156,9 @@ while mainLoop:
         item.update()
         item.draw(DISPLAYSURF)
     for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                pygame.quit()
         # print(current_state)
         if event.type == pygame.QUIT:
             mainLoop = False
