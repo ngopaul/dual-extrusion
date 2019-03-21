@@ -20,6 +20,7 @@ w, h = pygame.display.get_surface().get_size()
 print("Width of screen:", w, "::", "Height of screen:", h)
 mainLoop = True
 current_state = [0]
+printcount = 0
 
 def display_loading():
     text_wait.visible = True
@@ -43,7 +44,8 @@ def connect_printer():
     p = printcore('COM3', 115200)
 
 def begin_print(fname):
-    global gcode, current_state
+    global gcode, current_state, printcount
+    printcount += 1
     current_state[0] = 1
     gcode = [i.strip() for i in open(fname)]
     gcode = gcoder.LightGCode(gcode)
@@ -137,28 +139,31 @@ class TextOut:
             screen.blit(self.txt_surface, (self.x, self.y))
 
 text_select = TextOut(w/2, h/5, "Select a print:", visibleon=[0])
+text_refill = TextOut(w/3, h/5, "Please ask staff to refill the printer.", visibleon=[3])
 text_printing = TextOut(w/2, h/5, "Printing:", visibleon=[1])
 text_paused = TextOut(w/2, h/5, "Paused.", visibleon=[2])
 text_wait = TextOut(w/2, h/4, "PLEASE WAIT...")
-shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/triangle.gcode'), [0]) 
-shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circle.gcode'), [0]) 
-shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/square.gcode'), [0]) 
+shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/trianglehandcraft.gcode'), [0]) 
+shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circlehandcraft.gcode'), [0]) 
+shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/squarehandcraft.gcode'), [0]) 
 shape_play = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "play.png"), pygame.image.load("images/" + "playselected.png"), 1, lambda: resume_print(), [2]) 
 shape_pause = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "pause.png"), pygame.image.load("images/" + "pauseselected.png"), 1, lambda: pause_print(), [1]) 
 shape_stop = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "stop.png"), pygame.image.load("images/" + "stopselected.png"), 1, lambda: disconnect_printer(), [1, 2]) 
-items = [text_select, text_printing, text_paused, shape_triangle, shape_circle, shape_square, shape_play, shape_pause, shape_stop]
+items = [text_select, text_printing, text_paused, text_refill, shape_triangle, shape_circle, shape_square, shape_play, shape_pause, shape_stop]
 while mainLoop:
     # if get_state():
     #     current_state[0] = get_state()
     # else:
     #     current_state[0] = 0
+    if printcount >= 10:
+        current_state[0] = 3
     for item in items:
         item.update()
         item.draw(DISPLAYSURF)
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
-                pygame.quit()
+                mainLoop = False
         # print(current_state)
         if event.type == pygame.QUIT:
             mainLoop = False
@@ -169,4 +174,5 @@ while mainLoop:
         
     pygame.display.update()
 
+p.disconnect()
 pygame.quit()
