@@ -22,6 +22,9 @@ mainLoop = True
 current_state = [0]
 printcount = 0
 
+def do_nothing(*args):
+    pass
+
 def display_loading():
     text_wait.visible = True
     text_wait.draw(DISPLAYSURF)
@@ -43,10 +46,12 @@ def connect_printer():
     global p
     p = printcore('COM3', 115200)
 
-def begin_print(fname):
+def begin_print(fname, state_add = 0):
     global gcode, current_state, printcount
     printcount += 1
     current_state[0] = 1
+    if state_add:
+        current_state.append(state_add)
     gcode = [i.strip() for i in open(fname)]
     gcode = gcoder.LightGCode(gcode)
     p.startprint(gcode)
@@ -63,9 +68,10 @@ def resume_print():
     current_state[0] = 1
 
 def disconnect_printer():
+    global current_state
     p.disconnect()
     connect_printer()
-    current_state[0] = 0
+    current_state = [0]
 
 class ImageButton():
     def __init__(self, x, y, image, imageselected, scale = 1, onclick = (lambda x: 0), visibleon = [0]):
@@ -77,7 +83,7 @@ class ImageButton():
         self.img = image
         self.imgrect = self.img.get_rect()
         self.visible = False
-        self.visibleon = visibleon
+        self.visibleon = set(visibleon)
         self.onclick = onclick
         self.update_image(image)
     
@@ -87,8 +93,8 @@ class ImageButton():
         self.imgrect = img.get_rect()
         self.imgrect.left = self.x
         self.imgrect.top = self.y
-        self.imgrect.width = self.imgrect.width
-        self.imgrect.height = self.imgrect.height
+        self.imgrect.width = self.imgrect.width * self.scale
+        self.imgrect.height = self.imgrect.height * self.scale
 
     def handle_event(self, event):
     #     if event.__dict__['printing']:
@@ -99,7 +105,7 @@ class ImageButton():
             self.onclick()
 
     def update(self):
-        if not (self.visible == (current_state[0] in self.visibleon)):
+        if not (self.visible == (not self.visibleon.isdisjoint(current_state))):
             self.visible = not self.visible
             DISPLAYSURF.fill(pygame.Color("black"))
         if self.visible:
@@ -138,18 +144,26 @@ class TextOut:
         if self.visible:
             screen.blit(self.txt_surface, (self.x, self.y))
 
-text_select = TextOut(w/2, h/5, "Select a print:", visibleon=[0])
-text_refill = TextOut(w/3, h/5, "Please ask staff to refill the printer.", visibleon=[3])
-text_printing = TextOut(w/2, h/5, "Printing:", visibleon=[1])
-text_paused = TextOut(w/2, h/5, "Paused.", visibleon=[2])
-text_wait = TextOut(w/2, h/4, "PLEASE WAIT...")
-shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/trianglehandcraft.gcode'), [0]) 
-shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circlehandcraft.gcode'), [0]) 
-shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/squarehandcraft.gcode'), [0]) 
-shape_play = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "play.png"), pygame.image.load("images/" + "playselected.png"), 1, lambda: resume_print(), [2]) 
-shape_pause = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "pause.png"), pygame.image.load("images/" + "pauseselected.png"), 1, lambda: pause_print(), [1]) 
-shape_stop = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "stop.png"), pygame.image.load("images/" + "stopselected.png"), 1, lambda: disconnect_printer(), [1, 2]) 
-items = [text_select, text_printing, text_paused, text_refill, shape_triangle, shape_circle, shape_square, shape_play, shape_pause, shape_stop]
+text_select = TextOut(w/2 - 70, h/5, "Select a print:", visibleon=[0])
+text_refill = TextOut(w/2 - 200, h/5, "Please ask staff to refill the printer.", visibleon=[3])
+text_printing = TextOut(w/2 - 50, h/5, "Printing:", visibleon=[1])
+text_paused = TextOut(w/2 - 30, h/4, "Paused.", visibleon=[2])
+text_wait = TextOut(w/2 - 70, h/4, "PLEASE WAIT...")
+shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/trianglehandcraft.gcode', 90), [0]) 
+shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circlehandcraft.gcode', 91), [0]) 
+shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/squarehandcraft.gcode', 92), [0]) 
+
+selected_triangle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangle.png"), 1, do_nothing, [90]) 
+selected_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circle.png"), 1, do_nothing, [91])
+selected_square = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "square.png"), 1, do_nothing, [92])
+
+shape_play = ImageButton(w/2 - 150 - 75, 3*h/4 - 75, pygame.image.load("images/" + "play.png"), pygame.image.load("images/" + "playselected.png"), 0.5, lambda: resume_print(), [2]) 
+shape_pause = ImageButton(w/2 - 0   - 75, 3*h/4 - 75, pygame.image.load("images/" + "pause.png"), pygame.image.load("images/" + "pauseselected.png"), 0.5, lambda: pause_print(), [1]) 
+shape_stop = ImageButton(w/2 + 150 - 75, 3*h/4 - 75, pygame.image.load("images/" + "stop.png"), pygame.image.load("images/" + "stopselected.png"), 0.5, lambda: disconnect_printer(), [1, 2]) 
+items = [text_select, text_printing, text_paused, text_refill, 
+shape_triangle, shape_circle, shape_square, 
+selected_triangle, selected_circle, selected_square,
+shape_play, shape_pause, shape_stop]
 while mainLoop:
     # if get_state():
     #     current_state[0] = get_state()
