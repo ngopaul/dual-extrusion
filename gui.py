@@ -149,9 +149,9 @@ text_refill = TextOut(w/2 - 200, h/5, "Please ask staff to refill the printer.",
 text_printing = TextOut(w/2 - 50, h/5, "Printing:", visibleon=[1])
 text_paused = TextOut(w/2 - 30, h/4, "Paused.", visibleon=[2])
 text_wait = TextOut(w/2 - 70, h/4, "PLEASE WAIT...")
-shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/trianglehandcraft.gcode', 90), [0]) 
-shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circlehandcraft.gcode', 91), [0]) 
-shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/squarehandcraft.gcode', 92), [0]) 
+shape_triangle = ImageButton(w/2 - 300 - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangleselected.png"), 1, lambda: begin_print('printfiles/trianglehandcraft2.gcode', 90), [0]) 
+shape_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circleselected.png"), 1, lambda: begin_print('printfiles/circlehandcraft2.gcode', 91), [0]) 
+shape_square = ImageButton(w/2 + 300 - 150, h/2 - 150, pygame.image.load("images/" + "square.png"), pygame.image.load("images/" + "squareselected.png"), 1, lambda: begin_print('printfiles/squarehandcraft2.gcode', 92), [0]) 
 
 selected_triangle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "triangle.png"), pygame.image.load("images/" + "triangle.png"), 1, do_nothing, [90]) 
 selected_circle = ImageButton(w/2 - 0   - 150, h/2 - 150, pygame.image.load("images/" + "circle.png"), pygame.image.load("images/" + "circle.png"), 1, do_nothing, [91])
